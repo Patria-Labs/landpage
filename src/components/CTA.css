@@ -1,0 +1,114 @@
+.cta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: center;
+}
+
+.cta-content .badge {
+  margin-bottom: 16px;
+}
+
+.cta-content h2 {
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin-bottom: 20px;
+}
+
+.cta-content > p {
+  font-size: 17px;
+  color: var(--gray-400);
+  line-height: 1.8;
+  margin-bottom: 32px;
+}
+
+.cta-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cta-contact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  color: var(--gray-300);
+}
+
+.cta-contact svg {
+  color: var(--primary-light);
+}
+
+.cta-form-wrapper {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 40px;
+}
+
+.cta-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-300);
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--white);
+  font-size: 15px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--gray-500);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: var(--primary-light);
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+.cta-submit {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .cta-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .cta-content h2 {
+    font-size: 32px;
+  }
+
+  .cta-form-wrapper {
+    padding: 28px;
+  }
+}

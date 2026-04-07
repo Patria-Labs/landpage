@@ -1,0 +1,38 @@
+name: Deploy Landpage
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ vars.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Upload files
+        run: |
+          scp -r dist Dockerfile nginx-container.conf ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }}:/root/landpage/
+
+      - name: Build and restart container
+        run: |
+          ssh ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }} "\
+            cd /root/landpage && \
+            docker build -t landpage . && \
+            docker rm -f landpage && \
+            docker run -d --name landpage -p 3000:3000 landpage"

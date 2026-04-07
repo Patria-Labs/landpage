@@ -34,7 +34,16 @@ jobs:
       - name: Build and restart container
         run: |
           ssh ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }} "\
-            cd ${{ vars.DEPLOY_DIR }} && \
-            docker build -t ${{ vars.CONTAINER_NAME }} . && \
-            docker rm -f ${{ vars.CONTAINER_NAME }} && \
-            docker run -d --name ${{ vars.CONTAINER_NAME }} -p ${{ vars.PORT }}:3000 --restart unless-stopped ${{ vars.CONTAINER_NAME }}"
+            docker compose -f ${{ vars.COMPOSE_FILE }} build ${{ vars.CONTAINER_NAME }} && \
+            docker compose -f ${{ vars.COMPOSE_FILE }} up -d ${{ vars.CONTAINER_NAME }}"
+
+      - name: Health check
+        run: |
+          sleep 5
+          STATUS=$(ssh ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }} "curl -sf -o /dev/null -w '%{http_code}' http://127.0.0.1:${{ vars.PORT }}/ || echo 'FAIL'")
+          if [ "$STATUS" != "200" ]; then
+            echo "Health check failed! Status: $STATUS"
+            ssh ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }} "docker logs ${{ vars.CONTAINER_NAME }} --tail 20"
+            exit 1
+          fi
+          echo "Health check passed (HTTP $STATUS)"

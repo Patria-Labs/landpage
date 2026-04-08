@@ -15,7 +15,7 @@ function Hero() {
           Automação inteligente com IA
         </div>
         <h1 className="hero-title">
-          Transforme suas redes sociais com o poder da{' '}
+          Teste Transforme suas redes sociais com o poder da{' '}
           <span className="highlight">Inteligência Artificial</span>
         </h1>
         <p className="hero-subtitle">

@@ -6,6 +6,7 @@ import HowItWorks from './components/HowItWorks'
 import Results from './components/Results'
 import Pricing from './components/Pricing'
 import CTA from './components/CTA'
+import Contact from './components/Contact'
 import Footer from './components/Footer'
 import './App.css'
 
@@ -20,6 +21,7 @@ function App() {
       <Results />
       <Pricing />
       <CTA />
+      <Contact />
       <Footer />
     </div>
   )

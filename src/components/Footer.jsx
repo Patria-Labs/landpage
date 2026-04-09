@@ -28,7 +28,6 @@ function Footer() {
             <a href="#sobre">Sobre Nós</a>
             <a href="#servicos">Serviços</a>
             <a href="#resultados">Resultados</a>
-            <a href="#contato">Contato</a>
           </div>
           <div className="footer-links">
             <h4>Serviços</h4>
@@ -39,7 +38,6 @@ function Footer() {
           </div>
           <div className="footer-links">
             <h4>Suporte</h4>
-            <a href="#contato">Fale Conosco</a>
             <a href="#">Central de Ajuda</a>
             <a href="#">Termos de Uso</a>
             <a href="#">Privacidade</a>

@@ -2,11 +2,12 @@ import { useState } from 'react'
 import './Contact.css'
 
 function Contact() {
-  const [form, setForm] = useState({ name: '', email: '', message: '' })
+  const [form, setForm] = useState({ name: '', email: '', phone: '', message: '', whatsappConsent: false })
   const [status, setStatus] = useState(null) // null | 'loading' | 'success' | 'error'
 
   function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    const { name, value, type, checked } = e.target
+    setForm({ ...form, [name]: type === 'checkbox' ? checked : value })
   }
 
   async function handleSubmit(e) {
@@ -20,7 +21,7 @@ function Contact() {
       })
       if (!res.ok) throw new Error()
       setStatus('success')
-      setForm({ name: '', email: '', message: '' })
+      setForm({ name: '', email: '', phone: '', message: '', whatsappConsent: false })
     } catch {
       setStatus('error')
     }
@@ -62,6 +63,28 @@ function Contact() {
                 disabled={status === 'loading'}
               />
             </div>
+            <div className="contact-field">
+              <label htmlFor="contact-phone">Telefone <span className="contact-optional">(opcional)</span></label>
+              <input
+                id="contact-phone"
+                type="tel"
+                name="phone"
+                placeholder="(11) 90000-0000"
+                value={form.phone}
+                onChange={handleChange}
+                disabled={status === 'loading'}
+              />
+            </div>
+            <label className="contact-checkbox">
+              <input
+                type="checkbox"
+                name="whatsappConsent"
+                checked={form.whatsappConsent}
+                onChange={handleChange}
+                disabled={status === 'loading'}
+              />
+              Aceito retorno via WhatsApp
+            </label>
             <div className="contact-field">
               <label htmlFor="contact-message">Mensagem</label>
               <textarea

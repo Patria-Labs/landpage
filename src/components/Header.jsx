@@ -21,6 +21,7 @@ function Header() {
           <a href="#como-funciona" onClick={() => setMenuOpen(false)}>Como Funciona</a>
           <a href="#resultados" onClick={() => setMenuOpen(false)}>Resultados</a>
           <a href="#planos" onClick={() => setMenuOpen(false)}>Planos</a>
+          <a href="#contato" onClick={() => setMenuOpen(false)}>Contato</a>
         </nav>
 
         <button

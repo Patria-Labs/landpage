@@ -19,6 +19,25 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+      - name: Pre-deploy validation
+        run: |
+          npx vite preview --port 4173 --host &
+          PASSED=false
+          for i in $(seq 1 10); do
+            if curl -sf -o /dev/null http://127.0.0.1:4173/ 2>/dev/null; then
+              PASSED=true
+              break
+            fi
+            echo "Waiting for preview server... ($i/10)"
+            sleep 2
+          done
+          kill %1 2>/dev/null || true
+          if [ "$PASSED" != "true" ]; then
+            echo "❌ Pre-deploy validation failed"
+            exit 1
+          fi
+          echo "✅ Pre-deploy validation passed"
+
       - name: Create deploy artifact
         id: artifact
         run: |

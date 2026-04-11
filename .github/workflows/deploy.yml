@@ -21,7 +21,7 @@ jobs:
 
       - name: Pre-deploy validation
         run: |
-          npx vite preview --port 4173 &
+          npx vite preview --port 4173 --host &
           PASSED=false
           for i in $(seq 1 10); do
             if curl -sf -o /dev/null http://127.0.0.1:4173/ 2>/dev/null; then

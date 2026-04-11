@@ -22,11 +22,18 @@ jobs:
       - name: Pre-deploy validation
         run: |
           npx vite preview --port 4173 &
-          sleep 3
-          STATUS=$(curl -sf -o /dev/null -w '%{http_code}' http://127.0.0.1:4173/ || echo 'FAIL')
+          PASSED=false
+          for i in $(seq 1 10); do
+            if curl -sf -o /dev/null http://127.0.0.1:4173/ 2>/dev/null; then
+              PASSED=true
+              break
+            fi
+            echo "Waiting for preview server... ($i/10)"
+            sleep 2
+          done
           kill %1 2>/dev/null || true
-          if [ "$STATUS" != "200" ]; then
-            echo "❌ Pre-deploy validation failed: $STATUS"
+          if [ "$PASSED" != "true" ]; then
+            echo "❌ Pre-deploy validation failed"
             exit 1
           fi
           echo "✅ Pre-deploy validation passed"

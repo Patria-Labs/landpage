@@ -19,6 +19,18 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+      - name: Pre-deploy validation
+        run: |
+          npx vite preview --port 4173 &
+          sleep 3
+          STATUS=$(curl -sf -o /dev/null -w '%{http_code}' http://127.0.0.1:4173/ || echo 'FAIL')
+          kill %1 2>/dev/null || true
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Pre-deploy validation failed: $STATUS"
+            exit 1
+          fi
+          echo "✅ Pre-deploy validation passed"
+
       - name: Create deploy artifact
         id: artifact
         run: |

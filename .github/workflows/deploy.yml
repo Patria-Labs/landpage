@@ -21,7 +21,7 @@ jobs:
 
       - name: Pre-deploy validation
         run: |
-          npx vite preview --port 4173 --host &
+          npx vite preview --port 4173 --host > /tmp/validation.log 2>&1 &
           PASSED=false
           for i in $(seq 1 10); do
             if curl -sf -o /dev/null http://127.0.0.1:4173/ 2>/dev/null; then
@@ -33,6 +33,7 @@ jobs:
           done
           kill %1 2>/dev/null || true
           if [ "$PASSED" != "true" ]; then
+            echo "Vite preview could not serve the build" >> /tmp/validation.log
             echo "❌ Pre-deploy validation failed"
             exit 1
           fi
@@ -129,6 +130,16 @@ jobs:
             echo "Attempt $i failed, retrying in 15s..."
             sleep 15
           done
+
+      - name: Report deploy failure
+        if: failure()
+        run: |
+          API_HOST=${{ github.ref_name == 'main' && 'patria.patriatechnology.com' || github.ref_name == 'homolog' && 'patria.homolog.patriatechnology.com' || 'patria.dev.patriatechnology.com' }}
+          DIAG=$(cat /tmp/validation.log 2>/dev/null | tail -50 || echo 'Pre-deploy validation failed')
+          PAYLOAD=$(jq -n --arg sha "${{ github.sha }}" --arg diag "$DIAG" '{commitSha: $sha, diagnostic: $diag}')
+          curl -sf -X POST "https://$API_HOST/api/webhooks/deploy-diagnostic" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" || true
 
       - name: Cleanup R2
         if: always()

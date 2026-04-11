@@ -4,10 +4,6 @@ on:
   push:
     branches: [main, homolog, develop]
 
-env:
-  SSH_RETRY: 3
-  SSH_RETRY_DELAY: 15
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -70,45 +66,50 @@ jobs:
             sleep 5
           done
 
-      - name: Download artifact on server
+      - name: Create deploy script
         run: |
-          echo '${{ steps.presign.outputs.DOWNLOAD_URL }}' > /tmp/download_url.txt
-          for i in $(seq 1 $SSH_RETRY); do
-            scp /tmp/download_url.txt server:/tmp/download_url.txt && \
-            ssh server "URL=\$(cat /tmp/download_url.txt) && curl -sfL \"\$URL\" -o /tmp/landpage-deploy.tar.gz && rm -f /tmp/download_url.txt" && break
-            echo "Attempt $i failed, retrying in ${SSH_RETRY_DELAY}s..."
-            sleep $SSH_RETRY_DELAY
-          done
+          cat > /tmp/deploy.sh << 'SCRIPT'
+          #!/bin/bash
+          set -e
+          DEPLOY_DIR="$1"
+          COMPOSE_FILE="$2"
+          CONTAINER_NAME="$3"
+          PORT="$4"
 
-      - name: Extract and deploy
-        run: |
-          for i in $(seq 1 $SSH_RETRY); do
-            ssh server "
-              set -e
-              DEPLOY_DIR=${{ vars.DEPLOY_DIR }}
-              mkdir -p \$DEPLOY_DIR
-              tar -xzf /tmp/landpage-deploy.tar.gz -C \$DEPLOY_DIR
-              rm -f /tmp/landpage-deploy.tar.gz
-              docker compose -f ${{ vars.COMPOSE_FILE }} build ${{ vars.CONTAINER_NAME }}
-              docker compose -f ${{ vars.COMPOSE_FILE }} up -d --force-recreate ${{ vars.CONTAINER_NAME }}
-            " && break
-            echo "Attempt $i failed, retrying in ${SSH_RETRY_DELAY}s..."
-            sleep $SSH_RETRY_DELAY
-          done
+          echo "⬇️ Downloading from R2..."
+          URL=$(cat /tmp/download_url.txt)
+          curl -sfL "$URL" -o /tmp/landpage-deploy.tar.gz
+          rm -f /tmp/download_url.txt
 
-      - name: Health check
-        run: |
+          echo "📦 Extracting..."
+          mkdir -p $DEPLOY_DIR
+          tar -xzf /tmp/landpage-deploy.tar.gz -C $DEPLOY_DIR
+          rm -f /tmp/landpage-deploy.tar.gz
+
+          echo "🐳 Building and restarting..."
+          docker compose -f $COMPOSE_FILE build $CONTAINER_NAME
+          docker compose -f $COMPOSE_FILE up -d --force-recreate $CONTAINER_NAME
+
+          echo "🔍 Health check..."
           sleep 5
-          for i in $(seq 1 $SSH_RETRY); do
-            STATUS=$(ssh server "curl -sf -o /dev/null -w '%{http_code}' http://127.0.0.1:${{ vars.PORT }}/ || echo 'FAIL'") && break
-            sleep $SSH_RETRY_DELAY
-          done
+          STATUS=$(curl -sf -o /dev/null -w '%{http_code}' http://127.0.0.1:$PORT/ || echo 'FAIL')
           if [ "$STATUS" != "200" ]; then
-            echo "Health check failed! Status: $STATUS"
-            ssh server "docker logs ${{ vars.CONTAINER_NAME }} --tail 20" || true
+            echo "❌ Health check failed: $STATUS"
+            docker logs $CONTAINER_NAME --tail 20
             exit 1
           fi
-          echo "Health check passed (HTTP $STATUS)"
+          echo "✅ Deploy OK (HTTP $STATUS)"
+          SCRIPT
+
+      - name: Deploy via single SSH
+        run: |
+          echo '${{ steps.presign.outputs.DOWNLOAD_URL }}' > /tmp/download_url.txt
+          for i in 1 2 3; do
+            scp /tmp/download_url.txt /tmp/deploy.sh server:/tmp/ && \
+            ssh server "chmod +x /tmp/deploy.sh && bash /tmp/deploy.sh '${{ vars.DEPLOY_DIR }}' '${{ vars.COMPOSE_FILE }}' '${{ vars.CONTAINER_NAME }}' '${{ vars.PORT }}' && rm -f /tmp/deploy.sh" && break
+            echo "Attempt $i failed, retrying in 15s..."
+            sleep 15
+          done
 
       - name: Cleanup R2
         if: always()
